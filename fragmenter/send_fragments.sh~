@@ -1,0 +1,50 @@
+#!/bin/bash
+
+FRAGS="../usr/frags"
+ADDR_SRC="c0ca:db8:2001:2::1"
+ADDR_DST="c0ca:db8:2001:2::3"
+PORT_DST=50000
+CHECKSUM=2d9c
+FRAG_ID=01234
+
+[ $# -ne 1 ] && echo "Sends all files contained in a directory." && \
+				echo "Filenames are sorted numerically." && \
+				echo "" && \
+				echo "USAGE: $(basename $0) DIR" && \
+				echo "	DIR: where the files to send are." && exit
+dir="$1"
+dir=${dir%%/}
+[ ! -d $dir ] && echo "Cannot read directory: $dir" && exit
+
+cont=0
+offset=0
+files=( $(ls -v $dir) )
+total_size=$(stat -c %s $dir/* | awk 'BEGIN{sum=0} {sum+=$1} END{print sum}')
+total_size=$((total_size+8)) # Add the UDP header size
+
+for file in ${files[@]}
+do
+	fileoffset=$(stat -c %s "$dir/$file")
+	echo "offset: $offset"
+	echo "fileoffset: $fileoffset"
+
+echo "** cont: $cont pkts_qty: $((${#files[@]}-1))"
+	if [ $cont == 0 ]
+	then
+echo "-- primera parte"
+echo "-- total_size: $total_size"
+		sudo $FRAGS -f "$dir/$file" -k -6u --sa6=$ADDR_SRC --da6=$ADDR_DST --frag-id=$FRAG_ID --dp=$PORT_DST --udp-chksum $CHECKSUM -M --inc-frag-hdr --udp-len $total_size
+		offset=$((offset+8))
+	elif [ $cont != $((${#files[@]}-1)) ]
+	then
+echo "-- parte intermedia"
+		sudo $FRAGS -f "$dir/$file" -k -6u --sa6=$ADDR_SRC --da6=$ADDR_DST --frag-id=$FRAG_ID --dp=$PORT_DST --frag-off=$offset --inc-frag-hdr -M
+	else
+echo "-- ultima parte"
+		sudo $FRAGS -f "$dir/$file" -k -6u --sa6=$ADDR_SRC --da6=$ADDR_DST --frag-id=$FRAG_ID --dp=$PORT_DST --frag-off=$offset --inc-frag-hdr
+	fi
+
+	[ $cont -ne ${file#*_} ] && echo ERROR, files in disorder: $file && exit
+	cont=$((++cont))
+	offset=$((offset+fileoffset))
+done

@@ -1,0 +1,1 @@
+cmd_/home/nat64/Desktop/frags/mod/frags.o := ld -m elf_x86_64   -r -o /home/nat64/Desktop/frags/mod/frags.o /home/nat64/Desktop/frags/mod/core.o /home/nat64/Desktop/frags/mod/config.o /home/nat64/Desktop/frags/mod/ipv6_hdr_iterator.o /home/nat64/Desktop/frags/mod/send_packet.o 

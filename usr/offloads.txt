@@ -1,0 +1,12 @@
+rx off
+tx off
+sg off
+tso off
+ufo off
+gso off
+gro off
+lro off
+rxvlan off
+txvlan off
+ntuple off
+rxhash off

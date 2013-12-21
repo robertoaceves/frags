@@ -1,0 +1,10 @@
+#ccflags-y := -I/home/user/Dropbox/Nat64/work/frags/usr
+ccflags-y := -I$(src)/../usr
+EXTRA_CFLAGS += -DDEBUG
+
+obj-m += frags.o
+
+frags-objs += core.o
+frags-objs += config.o
+frags-objs += ipv6_hdr_iterator.o
+frags-objs += send_packet.o
